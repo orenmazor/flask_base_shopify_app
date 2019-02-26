@@ -6,13 +6,12 @@ from flask import Flask, redirect, url_for, render_template, request, session
 from flask_login import LoginManager, login_required, login_user, current_user, UserMixin
 from random import randint
 from zappa.async import task
-from uuid import uuid4
 from wtforms import Form, StringField, validators
 
 from graphql import create_customer_on_shopify, create_order_for_customer_on_shopify
 
 app = Flask(__name__)
-app.secret_key = uuid4().hex
+app.secret_key = "change me"
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -72,7 +71,7 @@ def login():
         shopify.Session.setup(api_key=os.environ.get("API_KEY"), secret=os.environ.get("SHARED_SECRET"))
         shopify_session = shopify.Session(request.form['store_name'])
 
-        scope=["write_customers", "write_orders", "unauthenticated_write_checkouts"]
+        scope=["write_customers", "unauthenticated_write_checkouts"]
         return redirect(shopify_session.create_permission_url(scope, url_for("oauth_callback", _external=True, _scheme=app.config.get("PREFERRED_URL_SCHEME"))))
 
     return render_template("shop_login.html")
@@ -82,6 +81,6 @@ def login():
 def index():
     for idx in range(10):
         # zappa will make this run async in lambdas <3
-        create_customer(current_user.token, current_user.store_url)
+        create_order_for_customer_on_shopify(current_user.storefront_token, current_user.store_url)
 
     return "Hello World!"
