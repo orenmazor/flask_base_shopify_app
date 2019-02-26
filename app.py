@@ -28,21 +28,6 @@ class User(UserMixin):
 def user_loader(id):
     return User(**json.loads(id))
 
-@task
-@app.route("/create_customer")
-def create_customer(access_token, store_url):
-    print("creating customers for {}".format(store_url))
-
-    new_customer = create_customer_on_shopify(access_token, store_url)
-    if new_customer["data"]["customerCreate"]["customer"]:
-        new_customer = new_customer["data"]["customerCreate"]["customer"]
-
-    order_count = randint(0, 4)
-    for order_idx in range(order_count):
-        create_order_for_customer_on_shopify(access_token, store_url, new_customer)
-
-    print("done!")
-
 @login_manager.unauthorized_handler
 def unauthorized():
     return redirect(url_for('login'))
